@@ -1,0 +1,607 @@
+<apex:page sidebar="false" showheader="true" standardstylesheets="false">
+
+<html>
+<head>
+
+    <title>SalesForce Together</title>
+
+    <apex:slds />
+    <style>
+        h2, h3, h4, h5 {
+            padding-bottom: 2rem;
+            text-align:center !important;
+        }
+        h3 {
+            padding-top: 1rem !important;
+            padding-bottom: 1rem !important;
+            /*text-decoration: underline #2a93bf;*/
+        }
+        .center {
+            text-align:center !important;
+        }
+        .right {
+            float:right;
+        }
+        .half {
+            max-width: 50%;
+        }
+        .hide {
+            opacity: 0;
+        }
+        .hinder {
+            display:none !important;
+        }
+        .red {
+            color: #c23934;
+            font-size: 1.6rem;
+            width: auto;
+            height: auto;
+            line-height: 0rem;
+        }
+        .delete {
+            text-decoration: none !important;
+            color: #c23934 !important;
+        }
+        .save {
+            background: #006ba6 !important;
+            color: white !important;
+            padding: .5rem !important;
+        }
+        .slds-col {
+            max-width: 50%;
+            padding-top: 1rem;
+        }
+
+        .errorMsg {
+            color: #f04124;
+        }
+        .background {
+            /* background-color:#eee; */
+            padding: .1rem 0 1rem 0;
+            width:100%;
+            height:100%;
+        }
+        .page {
+            margin: 1rem;
+            padding: 1rem;
+            border: 1pt solid #eee;
+            background: #FFF !important;
+            box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+        }
+        .header {
+            text-align: center;
+            padding: 1rem;
+        }
+        .secInfo {
+            
+        }
+        .pageTitle {
+            font-size: 1.8rem !important;
+        }
+        .secInfo {
+            padding: 1.1rem !important;
+            font-size: 1.1rem !important;
+            text-align:center;
+        }
+        .actions{
+            text-align: right;
+            margin-top: 2rem;
+        }
+        .addRow {
+            text-decoration:none !important;
+        }
+        .actions input, .actions a {
+            padding: 1rem 2.25rem 1rem 2.25rem !important;
+            margin: 1rem !important;
+        }
+        .secContainer {
+            height: auto;
+            width: 100%;
+            margin-bottom: 5rem;
+        }
+        .cleanBorder {
+            border:none;
+            border-bottom: 1pt solid #0070d2;
+        }
+        .description {
+            width: 75%;
+        }
+        .help {
+            cursor: help;
+            color: #006ba6;
+            font-weight: 600;
+            background-color: #FFF;
+            border: .1rem solid #006ba6;
+            margin-left: 0.45rem;
+            padding: 0rem 0.35em 0 0.35em;
+            line-height: 1.5rem;
+        }
+        .bigTextarea {
+            width: 85%;
+            height: 20rem;
+            margin-top: 1rem !important;
+            margin-bottom: 1rem !important;
+        }
+        .bigTd {
+            padding-top: .4rem !important;
+        }
+        .halfContainer {
+            text-align: left;
+            margin-left: 15%;
+            margin-right: -15%;
+        }
+        .paddBottom {
+            padding-bottom: 2rem;
+        }
+        .secContainer tr {
+            margin: 1rem 1rem 1rem 1rem;
+            height: 5rem;
+            border-bottom: 1pt solid #d8dde6;
+        }
+
+        .message {
+            width: 70%;
+            color: #000;
+            margin: 0 auto !important;
+            text-align: left;
+            border-width: 1px;
+            border-style: solid;
+            padding: 6px 8px 6px 6px !important;
+            background-color: #f0f0f0;
+            /* border: 3px solid #c23934; */
+        }
+        .message td {
+            min-width: 2rem;
+        }
+        .message li:last-child {
+        display: none;
+        }
+        .message li:first-child {
+        display: block;
+        }
+
+        textarea, input, select {
+            padding: 6px 12px;
+            font-size: 14px;
+            line-height: 1.42857143;
+            color: #555;
+            background-color: #fff;
+            background-image: none;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+            box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+            -webkit-transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+            -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+            transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+        }
+        select, input:not([type='checkbox']):not([type='submit']):not([type='radio']):not(#phSearchInput):not(#phSearchButton) {
+            width: 96%;
+            height: 34px;
+            display: block;
+        }
+        textarea {
+            width: 96%;
+            height: 68px;
+        }    
+        input[type='radio'] {
+            width: 1.1rem;
+        }
+        input.currency {
+            text-align: right;
+            padding-right: 15px;
+        }
+
+        .appSection {
+            background: #006ba6 !important;
+            color: white !important;
+            padding: 1rem !important;
+        }
+        .fullDiv {
+            margin: 1rem 0 1rem 0;
+        }
+        .secButton {
+            color: white !important;
+            background: #006ba6 !important;
+            border-radius: 2pc !important;
+        }
+        .nextButt, .submitButt {
+            background: #006ba6 !important;
+            border-color:#006ba6 !important;
+            color: white !important;
+        }
+        .nextButt:hover, .submitButt:hover {
+            background: #006ba6 !important;
+            color: white !important;
+        }
+        #back {
+            padding-left: 1rem;
+            padding-right: 1rem;
+            text-align: center;
+            vertical-align: middle;
+            background-color: #c23934;
+            border: 1px solid #c23934;
+            border-radius: 4px;
+            color: #fff;
+            text-decoration:none;
+        }
+        #back:hover {
+            background-color: #a61a14 !important;
+            color: #fff !important;
+        }
+
+        .uploadButton {
+            background: #7dc246;
+            color: white !important;
+            padding: .3rem;
+            border-radius: .25rem;
+            border: none;
+            box-shadow: 0 6px 28px rgba(0,0,0,0.25), 0 5px 5px rgba(0,0,0,0.22);
+        }
+
+        .secTitle {
+            font-size: 1.3rem !important;
+            margin-top: 3rem !important;
+            padding: 1.1rem;
+            font-size: 1.1rem;
+
+        }
+
+        .unorderedList > li {
+            margin-left: 2rem;
+            list-style-type: circle;
+        }
+
+        .buttonRight {
+            text-align: right;
+        }
+
+        .formBack {
+            height: 3.25rem !important;
+            line-height: 1rem !important;
+        }
+        .greyBack, .TOTAL {
+            background: #eee;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section class="background">
+        <section class="page slds-scope">
+            
+            <div class="header">
+                <h3 class="pageTitle">SalesForce Together</h3>
+                <div class="pageInfo">
+
+                    <h4 style="font-size: 1.2rem;"><i>Note: This is a demo and stuffs - Jamie</i></h4>
+                    <br />
+                    <button id="start" class="slds-button slds-button_success">Start Collab</button>
+
+                </div>
+                
+                <div class="messages"></div>
+            </div>
+            
+            <h3 class="secTitle">Financing Information Demo</h3>
+            <ul class="slds-accordion">
+                
+                <li class="slds-accordion__list-item">
+                    <section class="slds-accordion__section slds-is-open">
+                        <div class="slds-accordion__summary">
+                            <h3 class="slds-text-heading_small slds-accordion__summary-heading">
+                                <button type="button" aria-controls="accordion-details-02" aria-expanded="true" class="slds-button slds-button_reset slds-accordion__summary-action appSection">
+                                    <svg class="slds-accordion__summary-action-icon slds-button__icon slds-button__icon_left" aria-hidden="true">
+                                        <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#switch')}" />
+                                    </svg>
+                                    <span class="slds-truncate" title="Accordion summary">
+                                        Section 2A:  Project Budget
+                                    </span>
+                                </button>
+                            </h3>
+                        </div>
+                        <div aria-hidden="false" class="slds-accordion__content" id="accordion-details-01">
+                            <div class="secContainer" >
+                                <div class="budToaster"></div>
+                                <table>
+                                    <th>Budget Line</th>
+                                    <th class="center">Funds</th>
+                                    <th class="center">Other Funds</th>
+                                    <th class="center">Border Collies</th>
+                                    <th class="center">Total</th>
+                                    <tbody class="addRowTo">
+                                        <tr class="budRow">
+                                            <td>
+                                                <span class="removeRow hinder"  style="float: right; margin-right: 1rem;">
+                                                    <svg fill="#c23934" class="slds-slds-button slds-button_icon-small slds-shrink-none" aria-hidden="true">
+                                                        <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#delete')}" />
+                                                    </svg>
+                                                </span>
+                                                Thingy 1
+                                            </td>
+                                            <td>
+                                                <input class="currency budSum1" value="" />
+                                            </td>
+                                            <td>
+                                                <input class="currency budSum2" value="" />
+                                            </td>
+                                            <td>
+                                                <input class="currency budSum3" value="" />
+                                            </td>
+                                            <td>
+                                                <input disabled="disabled" class="TOTAL currency" />
+                                            </td>
+                                        </tr>
+                                        <tr class="budRow">
+                                            <td>
+                                                <span class="removeRow hinder"  style="float: right; margin-right: 1rem;">
+                                                    <svg fill="#c23934" class="slds-slds-button slds-button_icon-small slds-shrink-none" aria-hidden="true">
+                                                        <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#delete')}" />
+                                                    </svg>
+                                                </span>
+                                                Thingy 2
+                                            </td>
+                                            <td>
+                                                <input class="currency budSum1" value="" />
+                                            </td>
+                                            <td>
+                                                <input class="currency budSum2" value="" />
+                                            </td>
+                                            <td>
+                                                <input class="currency budSum3" value="" />
+                                            </td>
+                                            <td>
+                                                <input disabled="disabled" class="TOTAL currency" />
+                                            </td>
+                                        </tr>
+                                        <tr class="budRow">
+                                            <td>
+                                                <span class="removeRow hinder"  style="float: right; margin-right: 1rem;">
+                                                    <svg fill="#c23934" class="slds-slds-button slds-button_icon-small slds-shrink-none" aria-hidden="true">
+                                                        <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#delete')}" />
+                                                    </svg>
+                                                </span>
+                                                Thingy 3
+                                            </td>
+                                            <td>
+                                                <input class="currency budSum1" value="" />
+                                            </td>
+                                            <td>
+                                                <input class="currency budSum2" value="" />
+                                            </td>
+                                            <td>
+                                                <input class="currency budSum3" value="" />
+                                            </td>
+                                            <td>
+                                                <input disabled="disabled" class="TOTAL currency" />
+                                            </td>
+                                        </tr>
+                                        <tr class="budRow">
+                                            <td>
+                                                <span class="removeRow hinder"  style="float: right; margin-right: 1rem;">
+                                                    <svg fill="#c23934" class="slds-slds-button slds-button_icon-small slds-shrink-none" aria-hidden="true">
+                                                        <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#delete')}" />
+                                                    </svg>
+                                                </span>
+                                                Thingy 4
+                                            </td>
+                                            <td>
+                                                <input class="currency budSum1" value="" />
+                                            </td>
+                                            <td>
+                                                <input class="currency budSum2" value="" />
+                                            </td>
+                                            <td>
+                                                <input class="currency budSum3" value="" />
+                                            </td>
+                                            <td>
+                                                <input disabled="disabled" class="TOTAL currency" />
+                                            </td>
+                                        </tr>
+                                        <tr class="budRow">
+                                            <td>
+                                                <span class="removeRow hinder"  style="float: right; margin-right: 1rem;">
+                                                    <svg fill="#c23934" class="slds-slds-button slds-button_icon-small slds-shrink-none" aria-hidden="true">
+                                                        <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#delete')}" />
+                                                    </svg>
+                                                </span>
+                                                Thingy 5
+                                            </td>
+                                            <td>
+                                                <input type="number" class="currency budSum1" />
+                                            </td>
+                                            <td>
+                                                <input type="number" class="currency budSum2" />
+                                            </td>
+                                            <td>
+                                                <input type="number" class="currency budSum3" />
+                                            </td>
+                                            <td>
+                                                <input disabled="disabled" class="TOTAL currency" />
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <table>
+                                <tr class="budTotal">
+                                    <td>
+                                        <b>Total</b>
+                                    </td>
+                                    <td>
+                                        <input class="budSumRes1 greyBack" disabled="disabled" />
+                                    </td>
+                                    <td>
+                                        <input class="budSumRes2 greyBack" disabled="disabled" />
+                                    </td>
+                                    <td>
+                                        <input class="budSumRes3 greyBack" disabled="disabled" />
+                                    </td>
+                                    <td>
+                                        <input class="budSumRes4 greyBack" disabled="disabled" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        &nbsp;
+                                    </td>
+                                    <td>
+                                        &nbsp;
+                                    </td>
+                                    <td>
+                                        &nbsp;
+                                    </td>
+                                    <td>
+                                        &nbsp;
+                                    </td>
+                                    <td style="text-align: center; width:10rem;">
+                                        <a class="addRow" title="Add a Row" >
+                                            <svg fill="#0070d2" class="slds-slds-button slds-button_icon-small slds-shrink-none" aria-hidden="true">
+                                                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#add')}" />
+                                            </svg>
+                                            <br/>
+                                            Add Row
+                                        </a>
+                                    </td>
+                                </tr>
+                                </table>
+                                
+                                <br />
+                                <div class="buttonRight">
+                                    <button id="saveBudget" type="button" class="slds-button save">Save Table</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </section>
+                </li>
+                
+            </ul>
+            
+            <div class="actions">
+                <span class="fullSave">
+                
+                    <button class="sfFix slds-button slds-button_destructive">Back</button>
+                    &nbsp;
+                    <button class="sfFix slds-button submitButt">Next</button>
+                </span>
+            </div>
+        </section>
+    </section>
+</body>
+    <!-- shim to insulate apps from spec changes and prefix differences.  -->
+    <!-- <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script> -->
+
+
+
+<script>
+  // Set to false or delete to disable analytics/tracking:
+  TowTruckConfig_enableAnalytics = true;
+</script>
+<script src="https://togetherjs.com/togetherjs-min.js"></script>
+
+
+  <script>
+    'use strict()'
+    
+    {   // Together Demo
+        document.querySelector('#start').onclick = (e) => TogetherJS()
+    }
+
+    {   // Accounting Table Demo
+        
+        const grandTotal = () => {
+            const totals = document.querySelectorAll('.TOTAL')
+            const grand = document.querySelector('.budSumRes4')
+            
+            grand.value = 0 
+            totals.forEach(t => grand.value = Number(grand.value) + Number(t.value))
+        }
+        const horizonSum = (el) => {
+        
+            const parent = el.parentElement.parentElement
+            
+            const n1 = parent.querySelector('.budSum1').value,
+                  n2 = parent.querySelector('.budSum2').value,
+                  n3 = parent.querySelector('.budSum3').value,
+                  total = parent.querySelector('.TOTAL');
+            
+            total.value = Number(n1) + Number(n2) + Number(n3)
+            
+            grandTotal()
+        }
+        const summer = (els, elRes) => {
+            
+            elRes.value = 0
+        
+            for(let el of els){
+                
+                if(el.value){
+                    
+                    elRes.value = Number(elRes.value) + Number(el.value)
+                    horizonSum(el)
+                }
+            }
+        }        
+        
+        const budSum1 = document.querySelectorAll('.budSum1')
+        const budSumRes1 = document.querySelector('.budSumRes1')
+        budSum1.forEach(el => el.onchange = () => summer(budSum1, budSumRes1 ))
+        summer(budSum1, budSumRes1 )
+
+        const budSum2 = document.querySelectorAll('.budSum2')
+        const budSumRes2 = document.querySelector('.budSumRes2')
+        budSum2.forEach(el => el.onchange = () => summer(budSum2, budSumRes2 ))
+        summer(budSum2, budSumRes2 )
+        
+        const budSum3 = document.querySelectorAll('.budSum3')
+        const budSumRes3 = document.querySelector('.budSumRes3')
+        budSum3.forEach(el => el.onchange = () => summer(budSum3, budSumRes3 ))
+        summer(budSum3, budSumRes3 )
+        
+    }
+
+    // type may be success || warning || info ; el = el to append toast to 
+    const mkToast = (msg, type, el) => {
+        
+        const cont = document.createElement('div')
+        const toaster = el
+
+        cont.innerHTML =  `<div style="height: 4rem;">
+            <div class="slds-notify_container slds-is-relative">
+                <div class="slds-notify slds-notify_toast slds-theme_${type}" role="alert">
+                    <span class="slds-assistive-text">${type}</span>
+                    <span class="slds-icon_container slds-icon-utility-${type} slds-m-right_small slds-no-flex slds-align-top" title="Description of icon when needed">
+                        <svg class="slds-icon slds-icon_small" aria-hidden="true">
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#${type}')}" />
+                        </svg>
+                    </span>
+                    <div class="slds-notify__content">
+                        <h2 class="slds-text-heading_small">${msg}</h2>
+                    </div>
+                    <button class="close slds-button slds-button_icon slds-notify__close slds-button_icon-inverse" title="Close">
+                        <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#close')}" />
+                        </svg>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                </div>
+            </div>
+        </div>`;
+        
+        cont.querySelector('.close').onclick = () => toaster.innerHTML = ''
+        toaster.innerHTML = ''
+        toaster.appendChild(cont.childNodes[0])
+    }
+
+    // resized demo
+    function resized() {
+        document.querySelector('.budTotal').firstElementChild.width = `${document.querySelector('.budRow').firstElementChild.clientWidth}px !important`
+    }
+    window.onresize = resized()
+    
+    </script>
+
+  </html>
+
+</apex:page>
