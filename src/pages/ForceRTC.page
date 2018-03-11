@@ -20,9 +20,12 @@
         }
         /* todo Show full local as a mirror, then on call add class that animates to this */
         #localVideo {
+            max-width: 420px;
+        }
+        #localVideo.connected {
             z-index: 999;
             position: absolute;
-            width: 84.5%;
+            width: 84.5% !important;
             height: 17%;
             margin-top: 26%;
         }
@@ -37,36 +40,61 @@
         .hide {
             display: none !important;
         }
+        .chatArea {
+            margin: auto;
+            width: 50%;
+            padding-top: 2rem;
+        }
+        .createArea {
+            margin: auto;
+            width: 12rem;
+            padding-top: 2rem;
+        }
+        .createButtons {
+            margin: auto;
+            width: 75%;
+        }
     </style>
 </head>
 
 <body>
 
-<div class="toaster"></div>
+<div class="toaster" style="height: 4rem;"></div>
 
 <div class="videos">
 
     <video id="localVideo" title="You" autoplay="true" muted="true"></video>
 
-    <video id="remoteVideo" autoplay="true"></video><br />
-
+    <video id="remoteVideo" autoplay="true" class="hide"></video>
+    <br />
 </div>
 
-<button id="create" class="slds-button slds-button_success">Create Connection</button>
+<div class="createArea center hide">
 
-<div id="div"></div>
+    <select class="userList" />
+    <br />
+    <br />
+    <div class="createButtons">
+        <button id="create" class="slds-button slds-button_success">Create Connection</button>
+    </div>
+</div>
 
-Chat: <input id="chat" title="Hit enter to send"></input><br />
+<br />
+<br />
+<br />
 
-<!--     
-        <video id="localVideo" autoplay="true" class="hide"></video>
-        <video id="remoteVideo" autoplay="true"></video>
+<div class="chatArea center hide">
 
-    <div class="actions">
-        <button id="startButton" class="slds-button slds-button_neutral">Start</button>
-        <button id="callButton" class="slds-button slds-button_success">Call</button>
-        <button id="hangupButton" class="slds-button slds-button_destructive">Hang Up</button>
-    </div> -->
+    <div id="div"></div>
+
+    <textarea 
+        id="chat" 
+        title="Hit enter to send" 
+        placeholder="Send text to peer. Press Enter to send.">
+    </textarea>
+
+    <br />
+</div>
 
 </body>
     <!-- shim to insulate apps from spec changes and prefix differences.  -->
@@ -74,21 +102,7 @@ Chat: <input id="chat" title="Hit enter to send"></input><br />
 
   <script>
     'use strict()'
-/*
-    const startButton = document.getElementById('startButton')
-    const callButton = document.getElementById('callButton')
-    const hangupButton = document.getElementById('hangupButton')
 
-    callButton.disabled = true
-    hangupButton.disabled = true
-    startButton.onclick = start
-    callButton.onclick = call
-    hangupButton.onclick = hangup
-
-    let startTime
-    const localVideo = document.getElementById('localVideo')
-    const remoteVideo = document.getElementById('remoteVideo')
-*/
     const localVideo = document.getElementById('localVideo')
     const remoteVideo = document.getElementById('remoteVideo')
     
@@ -96,30 +110,28 @@ Chat: <input id="chat" title="Hit enter to send"></input><br />
     buttons.create = document.getElementById('create')
     buttons.create.onclick = createOffer
 
-    const server = { urls: "stun:stun.l.google.com:19302" };
+    const server = { urls: "stun:stun.l.google.com:19302" }
 
     const enterPressed = e => e.keyCode == 13
     const log = msg => div.innerHTML += `<p>${msg}</p>`
 
     const getMedia = navigator.mediaDevices.getUserMedia({video:true, audio:true})
-        .then(stream => pc.addStream(localVideo.srcObject = stream)).catch(log)
+        .then(stream => pc.addStream(localVideo.srcObject = stream))
+        .catch(e => mkToast(e, 'error'))
 
     const haveAnswer = (conn) => {
 
-        //Fix up the _answer
-        const _answer = `${conn.jamiesmith__Answer__c}\r\n`
-            
-        const desc = new RTCSessionDescription({ type:"answer", sdp:_answer })
+        //Fix up the answer
+        const answer = `${conn.jamiesmith__Answer__c}\r\n`
+
+        const desc = new RTCSessionDescription({ type:"answer", sdp:answer })
         pc.setRemoteDescription(desc)
             .then(x => mkToast('Connected', 'success'))
             .catch(x => mkToast(x, 'warning'))
     }
 
-    //let numOfPoles = 0
     const poleForAnswer = (Id) => {
-        
-        //numOfPoles++
-        //console.log('polling ', numOfPoles, ' ', Id)
+
         const getConn = new Promise((resolve, reject) =>
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.ForceRTC.getConnection}',
@@ -128,7 +140,6 @@ Chat: <input id="chat" title="Hit enter to send"></input><br />
         .then(conn => conn.jamiesmith__Answer__c 
             ? haveAnswer(conn) 
             : setTimeout(() => poleForAnswer(Id), 10000))
-            
         .catch(x => mkToast(x, 'warning'))
     }
 
@@ -144,15 +155,13 @@ Chat: <input id="chat" title="Hit enter to send"></input><br />
                     (result, e) => e.status ? resolve(result) : reject(e.message))
             ).then(conn => {
 
-                mkToast('Found Connection. Joining...', 'success')
-                console.log(conn)
+                mkToast('Found Connection. Replying...', 'success')
 
-                //Fix up the _offer
-                const _offer = `${conn.jamiesmith__Offer__c}\r\n`
-                //console.log(_offer)
+                //Fix up the offer
+                const offer = `${conn.jamiesmith__Offer__c}\r\n`
                 
                 // set _offer
-                const desc = new RTCSessionDescription({ type:"offer", sdp:_offer })
+                const desc = new RTCSessionDescription({ type:"offer", sdp:offer })
                 pc.setRemoteDescription(desc)
                     .then(() => pc.createAnswer()).then(d => pc.setLocalDescription(d))
                     .catch(error => mkToast(error, 'error'))
@@ -178,31 +187,62 @@ Chat: <input id="chat" title="Hit enter to send"></input><br />
                 
             }).catch(error => mkToast(error, 'error'))
         }
+        else {
+            
+            // Show creation stuff
+            document.querySelector('.createArea').classList.remove('hide')
+
+            // This is Client1
+            const select = document.querySelector('.userList')
+            select.innerHTML = `<option value="">--Select User--</option>`
+            // Get potential ClientB's
+            const getUsers = new Promise((resolve, reject) =>
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.ForceRTC.getUsers}',
+                    (result, e) => e.status ? resolve(result) : reject(e.message)))
+            .then(x => x.map(u => select.innerHTML += `<option value="${u.Id}">${u.Name}</option>`))
+            .catch(error => mkToast(error, 'error'))
+        }
     }
     
     const pc = new RTCPeerConnection({ iceServers: [server] })
-    pc.onaddstream = e => remoteVideo.srcObject = e.stream
+    pc.onaddstream = e => {
+        remoteVideo.srcObject = e.stream
+        localVideo.classList.add('hide')
+        remoteVideo.classList.remove('hide')
+        localVideo.classList.add('connected')
+        localVideo.classList.remove('hide')
+    }
     
     let dc // data channel
     pc.ondatachannel = e => dcInit(dc = e.channel)
     pc.oniceconnectionstatechange = e => log(pc.iceConnectionState)
-
-
     function dcInit() {
-        
-        dc.onopen = () => mkToast('Chat available', 'success')
+
+        dc.onopen = () => {
+            document.querySelector('.chatArea').classList.remove('hide')
+            mkToast('Chat available', 'success')
+        }
         dc.onmessage = e => log(e.data)
     }
 
     function createOffer() {
         
-        mkToast('Creating connection', 'info')
+        const userId = document.querySelector('.userList').value
+
+        if(userId){
+            mkToast('Creating connection.  This may take ~20 seconds.', 'info')
+        }
+        else {
+            mkToast('Select a Peer to Connect to...', 'warning')
+            return
+        }
         
         dcInit(dc = pc.createDataChannel("chat"))
 
         getMedia.then(() => pc.createOffer())
             .then(d => pc.setLocalDescription(d))
-            .catch(log);
+            .catch(log)
             
         pc.onicecandidate = e => {
 
@@ -216,21 +256,14 @@ Chat: <input id="chat" title="Hit enter to send"></input><br />
                 Visualforce.remoting.Manager.invokeAction(
                     '{!$RemoteAction.ForceRTC.mkConnection}',
                     pc.localDescription.sdp,
+                    userId,
                     (result, e) => e.status ? resolve(result) : reject(e.message))
             ).then(conn => {
-
-                mkToast(`${location.origin}${location.pathname}?id=${conn.Id}`, 'success')
-                //console.log(conn.Id)
-                //console.log(${location.origin}${location.pathname}?id=${conn.Id})
+                
+                mkToast('Connection created. Waiting for reply...', 'info')
 
                 poleForAnswer(conn.Id)
-                
-                if(pc.signalingState != "have-local-offer"){
-                    console.log('warn: ', pc.signalingState)
-                    //return 
-                }
 
-                //setTimeout(mkToast('Share Link with peer', 1500);
             }).catch(error => mkToast(error, 'error'))
         }
     }
@@ -246,7 +279,6 @@ Chat: <input id="chat" title="Hit enter to send"></input><br />
         chat.value = ''
     }
 
-    // type may be success || warning || info ; el = el to append toast to 
     const mkToast = (msg, type) => {
         
         const cont = document.createElement('div')
@@ -272,7 +304,7 @@ Chat: <input id="chat" title="Hit enter to send"></input><br />
                     </button>
                 </div>
             </div>
-        </div>`;
+        </div>`
         
         cont.querySelector('.close').onclick = () => toaster.innerHTML = ''
         toaster.innerHTML = ''
@@ -285,4 +317,3 @@ Chat: <input id="chat" title="Hit enter to send"></input><br />
   </html>
 
 </apex:page>
-
