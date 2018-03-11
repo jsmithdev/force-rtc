@@ -1,0 +1,264 @@
+<apex:component>
+
+<apex:slds />
+
+<style>
+    h2, h3, h4, h5 {
+        padding-bottom: 2rem;
+        text-align:center !important;
+    }
+    h3 {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+        /*text-decoration: underline #2a93bf;*/
+    }
+    .center {
+        text-align:center !important;
+    }
+    .right {
+        float:right;
+    }
+    .half {
+        max-width: 50%;
+    }
+    .hide {
+        opacity: 0;
+    }
+    .hinder {
+        display:none !important;
+    }
+    .red {
+        color: #c23934;
+        font-size: 1.6rem;
+        width: auto;
+        height: auto;
+        line-height: 0rem;
+    }
+    .delete {
+        text-decoration: none !important;
+        color: #c23934 !important;
+    }
+    .save {
+        background: #006ba6 !important;
+        color: white !important;
+        padding: .5rem !important;
+    }
+    .slds-col {
+        max-width: 50%;
+        padding-top: 1rem;
+    }
+
+    .errorMsg {
+        color: #f04124;
+    }
+    .background {
+        /* background-color:#eee; */
+        padding: .1rem 0 1rem 0;
+        width:100%;
+        height:100%;
+    }
+    .page {
+        margin: 1rem;
+        padding: 1rem;
+        border: 1pt solid #eee;
+        background: #FFF !important;
+        box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+    }
+    .header {
+        text-align: center;
+        padding: 1rem;
+    }
+    .secInfo {
+        
+    }
+    .pageTitle {
+        font-size: 1.8rem !important;
+    }
+    .secInfo {
+        padding: 1.1rem !important;
+        font-size: 1.1rem !important;
+        text-align:center;
+    }
+    .actions{
+        text-align: right;
+        margin-top: 2rem;
+    }
+    .addRow {
+        text-decoration:none !important;
+    }
+    .actions input, .actions a {
+        padding: 1rem 2.25rem 1rem 2.25rem !important;
+        margin: 1rem !important;
+    }
+    .secContainer {
+        height: auto;
+        width: 100%;
+        margin-bottom: 5rem;
+    }
+    .cleanBorder {
+        border:none;
+        border-bottom: 1pt solid #0070d2;
+    }
+    .description {
+        width: 75%;
+    }
+    .help {
+        cursor: help;
+        color: #006ba6;
+        font-weight: 600;
+        background-color: #FFF;
+        border: .1rem solid #006ba6;
+        margin-left: 0.45rem;
+        padding: 0rem 0.35em 0 0.35em;
+        line-height: 1.5rem;
+    }
+    .bigTextarea {
+        width: 85%;
+        height: 20rem;
+        margin-top: 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+    .bigTd {
+        padding-top: .4rem !important;
+    }
+    .halfContainer {
+        text-align: left;
+        margin-left: 15%;
+        margin-right: -15%;
+    }
+    .paddBottom {
+        padding-bottom: 2rem;
+    }
+    .secContainer tr {
+        margin: 1rem 1rem 1rem 1rem;
+        height: 5rem;
+        border-bottom: 1pt solid #d8dde6;
+    }
+
+    .message {
+        width: 70%;
+        color: #000;
+        margin: 0 auto !important;
+        text-align: left;
+        border-width: 1px;
+        border-style: solid;
+        padding: 6px 8px 6px 6px !important;
+        background-color: #f0f0f0;
+        /* border: 3px solid #c23934; */
+    }
+    .message td {
+        min-width: 2rem;
+    }
+    .message li:last-child {
+    display: none;
+    }
+    .message li:first-child {
+    display: block;
+    }
+
+    textarea, input, select {
+        padding: 6px 12px;
+        font-size: 14px;
+        line-height: 1.42857143;
+        color: #555;
+        background-color: #fff;
+        background-image: none;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+        box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+        -webkit-transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+        -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+        transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+    }
+    select, input:not([type='checkbox']):not([type='submit']):not([type='radio']):not(#phSearchInput):not(#phSearchButton) {
+        width: 96%;
+        height: 34px;
+        display: block;
+    }
+    textarea {
+        width: 96%;
+        height: 68px;
+    }    
+    input[type='radio'] {
+        width: 1.1rem;
+    }
+    input.currency {
+        text-align: right;
+        padding-right: 15px;
+    }
+
+    .appSection {
+        background: #006ba6 !important;
+        color: white !important;
+        padding: 1rem !important;
+    }
+    .fullDiv {
+        margin: 1rem 0 1rem 0;
+    }
+    .secButton {
+        color: white !important;
+        background: #006ba6 !important;
+        border-radius: 2pc !important;
+    }
+    .nextButt, .submitButt {
+        background: #006ba6 !important;
+        border-color:#006ba6 !important;
+        color: white !important;
+    }
+    .nextButt:hover, .submitButt:hover {
+        background: #006ba6 !important;
+        color: white !important;
+    }
+    #back {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        text-align: center;
+        vertical-align: middle;
+        background-color: #c23934;
+        border: 1px solid #c23934;
+        border-radius: 4px;
+        color: #fff;
+        text-decoration:none;
+    }
+    #back:hover {
+        background-color: #a61a14 !important;
+        color: #fff !important;
+    }
+
+    .uploadButton {
+        background: #7dc246;
+        color: white !important;
+        padding: .3rem;
+        border-radius: .25rem;
+        border: none;
+        box-shadow: 0 6px 28px rgba(0,0,0,0.25), 0 5px 5px rgba(0,0,0,0.22);
+    }
+
+    .secTitle {
+        font-size: 1.3rem !important;
+        margin-top: 3rem !important;
+        padding: 1.1rem;
+        font-size: 1.1rem;
+
+    }
+
+    .unorderedList > li {
+        margin-left: 2rem;
+        list-style-type: circle;
+    }
+
+    .buttonRight {
+        text-align: right;
+    }
+
+    .formBack {
+        height: 3.25rem !important;
+        line-height: 1rem !important;
+    }
+    .greyBack, .TOTAL {
+        background: #eee;
+    }
+</style>
+
+</apex:component>

@@ -48,21 +48,15 @@
 
     <video id="localVideo" title="You" autoplay="true" muted="true"></video>
 
-    <video id="video2" autoplay="true"></video><br />
+    <video id="remoteVideo" autoplay="true"></video><br />
 
 </div>
 
-<button id="BUTTON_createOffer">Create Connection</button>
-
-<textarea id="offer" placeholder="Paste offer here"></textarea><br />
-
-Answer: <textarea id="answer"></textarea>
-
-<br />
+<button id="create" class="slds-button slds-button_success">Create Connection</button>
 
 <div id="div"></div>
 
-Chat: <input id="chat"></input><br />
+Chat: <input id="chat" title="Hit enter to send"></input><br />
 
 <!--     
         <video id="localVideo" autoplay="true" class="hide"></video>
@@ -96,12 +90,11 @@ Chat: <input id="chat"></input><br />
     const remoteVideo = document.getElementById('remoteVideo')
 */
     const localVideo = document.getElementById('localVideo')
-    const video2 = document.getElementById('video2')
+    const remoteVideo = document.getElementById('remoteVideo')
     
     const buttons = {}
-    buttons.offer = document.getElementById('offer')
-    buttons.createOffer = document.getElementById('BUTTON_createOffer')
-    buttons.createOffer.onclick = createOffer
+    buttons.create = document.getElementById('create')
+    buttons.create.onclick = createOffer
 
     const server = { urls: "stun:stun.l.google.com:19302" };
 
@@ -112,18 +105,21 @@ Chat: <input id="chat"></input><br />
         .then(stream => pc.addStream(localVideo.srcObject = stream)).catch(log)
 
     const haveAnswer = (conn) => {
-        
-        answer.disabled = true
-        const desc = new RTCSessionDescription({ type:"answer", sdp:conn.jamiesmith__Answer__c })
+
+        //Fix up the _answer
+        const _answer = `${conn.jamiesmith__Answer__c}\r\n`
+            
+        const desc = new RTCSessionDescription({ type:"answer", sdp:_answer })
         pc.setRemoteDescription(desc)
             .then(x => mkToast('Connected', 'success'))
             .catch(x => mkToast(x, 'warning'))
     }
 
-    let numOfPoles = 0
-    const poleForAnswer = () => {
-        numOfPoles++
-        console.log('polling ', numOfPoles)
+    //let numOfPoles = 0
+    const poleForAnswer = (Id) => {
+        
+        //numOfPoles++
+        //console.log('polling ', numOfPoles, ' ', Id)
         const getConn = new Promise((resolve, reject) =>
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.ForceRTC.getConnection}',
@@ -131,7 +127,7 @@ Chat: <input id="chat"></input><br />
                 (result, e) => e.status ? resolve(result) : reject(e.message)))
         .then(conn => conn.jamiesmith__Answer__c 
             ? haveAnswer(conn) 
-            : setTimeout(poleForAnswer(), 20000))
+            : setTimeout(() => poleForAnswer(Id), 10000))
             
         .catch(x => mkToast(x, 'warning'))
     }
@@ -140,8 +136,6 @@ Chat: <input id="chat"></input><br />
     {   // if params, there's a connection made already so get it
         const Id = new URL(location.href).searchParams.get("id")
         if(Id){
-
-            buttons.createOffer.disabled = true
             
             const getConn = new Promise((resolve, reject) =>
                 Visualforce.remoting.Manager.invokeAction(
@@ -153,18 +147,9 @@ Chat: <input id="chat"></input><br />
                 mkToast('Found Connection. Joining...', 'success')
                 console.log(conn)
 
-                // have offer in conn
-                buttons.createOffer.disabled = true
-                buttons.createOffer.style.display = 'none'
-
                 //Fix up the _offer
-                let _offer = conn.jamiesmith__Offer__c
-                const spot = _offer.indexOf('webrtc-datachannel')
-                const datachannel = _offer.substring(spot, _offer.length)
-                _offer = _offer.substring(0, spot-1)
-                _offer = `${_offer}\n${datachannel}\n\n`
-
-                console.log(_offer)
+                const _offer = `${conn.jamiesmith__Offer__c}\r\n`
+                //console.log(_offer)
                 
                 // set _offer
                 const desc = new RTCSessionDescription({ type:"offer", sdp:_offer })
@@ -178,27 +163,25 @@ Chat: <input id="chat"></input><br />
                         return
                     }
 
-                    answer.focus()
-                    answer.value = pc.localDescription.sdp
-                    answer.select()
+                    // Answer = pc.localDescription.sdp
+
                     // Set Answer for Peer's pole to pickup
                     const setAnswer = new Promise((resolve, reject) =>
-                    Visualforce.remoting.Manager.invokeAction(
-                        '{!$RemoteAction.ForceRTC.setAnswer}',
-                        Id,
-                        pc.localDescription.sdp,
-                        (result, e) => e.status ? resolve(result) : reject(e.message)))
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.ForceRTC.setAnswer}',
+                            Id,
+                            pc.localDescription.sdp,
+                            (result, e) => e.status ? resolve(result) : reject(e.message)))
                     .then(x => mkToast('Set Answer. Waiting for peer\'s connection...'))
+                    .catch(error => mkToast(error, 'error'))
                 }
                 
             }).catch(error => mkToast(error, 'error'))
         }
     }
-
-
     
     const pc = new RTCPeerConnection({ iceServers: [server] })
-    pc.onaddstream = e => video2.srcObject = e.stream
+    pc.onaddstream = e => remoteVideo.srcObject = e.stream
     
     let dc // data channel
     pc.ondatachannel = e => dcInit(dc = e.channel)
@@ -207,17 +190,14 @@ Chat: <input id="chat"></input><br />
 
     function dcInit() {
         
-        dc.onopen = () => mkToast('Chat available', 'info')
+        dc.onopen = () => mkToast('Chat available', 'success')
         dc.onmessage = e => log(e.data)
     }
 
     function createOffer() {
         
         mkToast('Creating connection', 'info')
-
-        buttons.createOffer.disabled = true
-        buttons.createOffer.style.display = 'none'
-
+        
         dcInit(dc = pc.createDataChannel("chat"))
 
         getMedia.then(() => pc.createOffer())
@@ -230,67 +210,29 @@ Chat: <input id="chat"></input><br />
                 return
             }
 
-            offer.value = pc.localDescription.sdp
-            offer.select()
-            answer.placeholder = 'Paste answer here'
+            // offer = pc.localDescription.sdp
 
             const mkConn = new Promise((resolve, reject) =>
                 Visualforce.remoting.Manager.invokeAction(
                     '{!$RemoteAction.ForceRTC.mkConnection}',
                     pc.localDescription.sdp,
                     (result, e) => e.status ? resolve(result) : reject(e.message))
-            ).then(x => {
+            ).then(conn => {
 
-                mkToast('Created Connection &amp; Set Offer', 'success')
-                console.log(x)
-                console.log(location);
+                mkToast(`${location.origin}${location.pathname}?id=${conn.Id}`, 'success')
+                //console.log(conn.Id)
+                //console.log(${location.origin}${location.pathname}?id=${conn.Id})
+
+                poleForAnswer(conn.Id)
                 
                 if(pc.signalingState != "have-local-offer"){
                     console.log('warn: ', pc.signalingState)
                     //return 
                 }
+
+                //setTimeout(mkToast('Share Link with peer', 1500);
             }).catch(error => mkToast(error, 'error'))
         }
-    }
-
-    offer.onkeypress = e => {
-
-        if (!enterPressed(e) || pc.signalingState != "stable"){
-            return
-        }
-
-        buttons.createOffer.disabled = true
-        offer.disabled = true
-
-        //const desc = new RTCSessionDescription({ type:"offer", sdp:offer.value })
-        pc.setRemoteDescription(new RTCSessionDescription({ type:"offer", sdp:offer.value }))
-            .then(() => pc.createAnswer()).then(d => pc.setLocalDescription(d))
-            .catch(log)
-        
-        pc.onicecandidate = e => {
-
-            if (e.candidate){
-                return
-            }
-
-            answer.focus()
-            answer.value = pc.localDescription.sdp
-            answer.select()
-        }
-    }
-
-
-    answer.onkeypress = e => {
-        
-        if(!enterPressed(e) || pc.signalingState != "have-local-offer"){
-            return
-        }
-
-        answer.disabled = true;
-        const desc = new RTCSessionDescription({ type:"answer", sdp:answer.value });
-        pc.setRemoteDescription(desc)
-            .then(x => console.log(x))
-            .catch(log)
     }
 
     chat.onkeypress = e => {
@@ -303,10 +245,6 @@ Chat: <input id="chat"></input><br />
         log(chat.value)
         chat.value = ''
     }
-
-
-
-
 
     // type may be success || warning || info ; el = el to append toast to 
     const mkToast = (msg, type) => {
