@@ -5,6 +5,7 @@
 !.gitignore
 !README.md
 !*/
+!*/classes/ForceRTC.cls
 !*/pages/ForceRTC.page
 !*/pages/Together.page
 !*/components/DemoCSS.component
