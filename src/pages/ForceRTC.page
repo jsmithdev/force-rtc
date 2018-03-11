@@ -1,4 +1,4 @@
-<apex:page sidebar="false" showheader="false" standardstylesheets="false">
+<apex:page controller="ForceRTC" sidebar="false" showheader="true" standardstylesheets="false">
 
 <html>
 <head>
@@ -42,24 +42,45 @@
 
 <body>
 
-    <div class="videos">
+<div class="toaster"></div>
+
+<div class="videos">
+
+    <video id="localVideo" title="You" autoplay="true" muted="true"></video>
+
+    <video id="video2" autoplay="true"></video><br />
+
+</div>
+
+<button id="BUTTON_createOffer">Create Connection</button>
+
+<textarea id="offer" placeholder="Paste offer here"></textarea><br />
+
+Answer: <textarea id="answer"></textarea>
+
+<br />
+
+<div id="div"></div>
+
+Chat: <input id="chat"></input><br />
+
+<!--     
         <video id="localVideo" autoplay="true" class="hide"></video>
         <video id="remoteVideo" autoplay="true"></video>
-    </div>
 
     <div class="actions">
         <button id="startButton" class="slds-button slds-button_neutral">Start</button>
         <button id="callButton" class="slds-button slds-button_success">Call</button>
         <button id="hangupButton" class="slds-button slds-button_destructive">Hang Up</button>
-    </div>
+    </div> -->
 
 </body>
-    <!-- shim to insulate apps from spec changes and prefix differences. (read: older browsers)  -->
+    <!-- shim to insulate apps from spec changes and prefix differences.  -->
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
 
   <script>
     'use strict()'
-
+/*
     const startButton = document.getElementById('startButton')
     const callButton = document.getElementById('callButton')
     const hangupButton = document.getElementById('hangupButton')
@@ -73,238 +94,254 @@
     let startTime
     const localVideo = document.getElementById('localVideo')
     const remoteVideo = document.getElementById('remoteVideo')
+*/
+    const localVideo = document.getElementById('localVideo')
+    const video2 = document.getElementById('video2')
+    
+    const buttons = {}
+    buttons.offer = document.getElementById('offer')
+    buttons.createOffer = document.getElementById('BUTTON_createOffer')
+    buttons.createOffer.onclick = createOffer
 
-    localVideo.addEventListener('loadedmetadata', function() {
-        console.log(`Local videoWidth: ${this.videoWidth}px, videoHeight:${this.videoHeight}px`)
-    })
+    const server = { urls: "stun:stun.l.google.com:19302" };
 
-    remoteVideo.addEventListener('loadedmetadata', function() {
-        console.log(`Remote videoWidth: ${this.videoWidth}px, videoHeight:${this.videoHeight}px`)
-    })
+    const enterPressed = e => e.keyCode == 13
+    const log = msg => div.innerHTML += `<p>${msg}</p>`
 
-    remoteVideo.onresize = function() {
-        console.log(`Remote changed Width: ${this.videoWidth}px, Height:${this.videoHeight}px`)
+    const getMedia = navigator.mediaDevices.getUserMedia({video:true, audio:true})
+        .then(stream => pc.addStream(localVideo.srcObject = stream)).catch(log)
 
-        // We'll use the first onsize callback as an indication that video has started
-        // playing out.
-        if (startTime) {
-            const elapsedTime = window.performance.now() - startTime
-            console.log('Setup time: ' + elapsedTime.toFixed(3) + 'ms')
-            startTime = null
-        }
-    }
-
-    let localStream,
-        pc1,
-        pc2,
-        offerOptions = {
-            offerToReceiveAudio: 1,
-            offerToReceiveVideo: 1
-        };
-
-    function getName(pc) {
-        return (pc === pc1) ? 'pc1' : 'pc2';
-    }
-
-    function getOtherPc(pc) {
-        return (pc === pc1) ? pc2 : pc1;
-    }
-
-    function gotStream(stream) {
-        console.log('Received local stream')
-        localVideo.srcObject = stream
-        localStream = stream
-        callButton.disabled = false
-    }
-
-    function start() {
-        console.log('Requesting local stream')
-        startButton.disabled = true;
-        navigator.mediaDevices.getUserMedia({
-            audio: true,
-            video: true
-        })
-        .then(gotStream)
-        .catch(function(e) {
-            alert('getUserMedia() error: ' + e.name)
-        })
-    }
-
-    function call() {
-
-        callButton.disabled = true
-        hangupButton.disabled = false
-
-        console.log('Starting call')
-        startTime = window.performance.now()
-
-        const videoTracks = localStream.getVideoTracks()
-        const audioTracks = localStream.getAudioTracks()
-
-        if (videoTracks.length > 0) {
-            console.log('Using video device: ' + videoTracks[0].label)
-        }
-        if (audioTracks.length > 0) {
-            console.log('Using audio device: ' + audioTracks[0].label)
-        }
+    const haveAnswer = (conn) => {
         
-        let servers = null
-        
-        pc1 = new RTCPeerConnection(servers)
-        console.log('Created local peer connection object pc1')
-        pc1.onicecandidate = function(e) {
-            onIceCandidate(pc1, e)
-        }
-        
-        pc2 = new RTCPeerConnection(servers)
+        answer.disabled = true
+        const desc = new RTCSessionDescription({ type:"answer", sdp:conn.jamiesmith__Answer__c })
+        pc.setRemoteDescription(desc)
+            .then(x => mkToast('Connected', 'success'))
+            .catch(x => mkToast(x, 'warning'))
+    }
 
-        console.log('Created remote peer connection object pc2')
-        
-        pc2.onicecandidate = function(e) {
-            onIceCandidate(pc2, e)
-        }
-        pc1.oniceconnectionstatechange = function(e) {
-            onIceStateChange(pc1, e)
-        }
-        pc2.oniceconnectionstatechange = function(e) {
-            onIceStateChange(pc2, e)
-        }
-        pc2.ontrack = gotRemoteStream
+    let numOfPoles = 0
+    const poleForAnswer = () => {
+        numOfPoles++
+        console.log('polling ', numOfPoles)
+        const getConn = new Promise((resolve, reject) =>
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ForceRTC.getConnection}',
+                Id,
+                (result, e) => e.status ? resolve(result) : reject(e.message)))
+        .then(conn => conn.jamiesmith__Answer__c 
+            ? haveAnswer(conn) 
+            : setTimeout(poleForAnswer(), 20000))
+            
+        .catch(x => mkToast(x, 'warning'))
+    }
 
-        localStream.getTracks().forEach(
-            function(track) {
-            pc1.addTrack(
-                track,
-                localStream
-            )
+
+    {   // if params, there's a connection made already so get it
+        const Id = new URL(location.href).searchParams.get("id")
+        if(Id){
+
+            buttons.createOffer.disabled = true
+            
+            const getConn = new Promise((resolve, reject) =>
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.ForceRTC.getConnection}',
+                    Id,
+                    (result, e) => e.status ? resolve(result) : reject(e.message))
+            ).then(conn => {
+
+                mkToast('Found Connection. Joining...', 'success')
+                console.log(conn)
+
+                // have offer in conn
+                buttons.createOffer.disabled = true
+                buttons.createOffer.style.display = 'none'
+
+                //Fix up the _offer
+                let _offer = conn.jamiesmith__Offer__c
+                const spot = _offer.indexOf('webrtc-datachannel')
+                const datachannel = _offer.substring(spot, _offer.length)
+                _offer = _offer.substring(0, spot-1)
+                _offer = `${_offer}\n${datachannel}\n\n`
+
+                console.log(_offer)
+                
+                // set _offer
+                const desc = new RTCSessionDescription({ type:"offer", sdp:_offer })
+                pc.setRemoteDescription(desc)
+                    .then(() => pc.createAnswer()).then(d => pc.setLocalDescription(d))
+                    .catch(error => mkToast(error, 'error'))
+                
+                pc.onicecandidate = e => {
+
+                    if (e.candidate){
+                        return
+                    }
+
+                    answer.focus()
+                    answer.value = pc.localDescription.sdp
+                    answer.select()
+                    // Set Answer for Peer's pole to pickup
+                    const setAnswer = new Promise((resolve, reject) =>
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.ForceRTC.setAnswer}',
+                        Id,
+                        pc.localDescription.sdp,
+                        (result, e) => e.status ? resolve(result) : reject(e.message)))
+                    .then(x => mkToast('Set Answer. Waiting for peer\'s connection...'))
+                }
+                
+            }).catch(error => mkToast(error, 'error'))
+        }
+    }
+
+
+    
+    const pc = new RTCPeerConnection({ iceServers: [server] })
+    pc.onaddstream = e => video2.srcObject = e.stream
+    
+    let dc // data channel
+    pc.ondatachannel = e => dcInit(dc = e.channel)
+    pc.oniceconnectionstatechange = e => log(pc.iceConnectionState)
+
+
+    function dcInit() {
+        
+        dc.onopen = () => mkToast('Chat available', 'info')
+        dc.onmessage = e => log(e.data)
+    }
+
+    function createOffer() {
+        
+        mkToast('Creating connection', 'info')
+
+        buttons.createOffer.disabled = true
+        buttons.createOffer.style.display = 'none'
+
+        dcInit(dc = pc.createDataChannel("chat"))
+
+        getMedia.then(() => pc.createOffer())
+            .then(d => pc.setLocalDescription(d))
+            .catch(log);
+            
+        pc.onicecandidate = e => {
+
+            if(e.candidate){
+                return
             }
-        )
-        console.log('Added local stream to pc1')
 
-        console.log('pc1 createOffer start')
-        pc1.createOffer(
-            offerOptions
-        ).then(
-            onCreateOfferSuccess,
-            onCreateSessionDescriptionError
-        )
+            offer.value = pc.localDescription.sdp
+            offer.select()
+            answer.placeholder = 'Paste answer here'
+
+            const mkConn = new Promise((resolve, reject) =>
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.ForceRTC.mkConnection}',
+                    pc.localDescription.sdp,
+                    (result, e) => e.status ? resolve(result) : reject(e.message))
+            ).then(x => {
+
+                mkToast('Created Connection &amp; Set Offer', 'success')
+                console.log(x)
+                console.log(location);
+                
+                if(pc.signalingState != "have-local-offer"){
+                    console.log('warn: ', pc.signalingState)
+                    //return 
+                }
+            }).catch(error => mkToast(error, 'error'))
+        }
     }
 
-    function onCreateSessionDescriptionError(error) {
-        console.log('Failed to create session description: ' + error.toString())
-    }
+    offer.onkeypress = e => {
 
-    function onCreateOfferSuccess(desc) {
+        if (!enterPressed(e) || pc.signalingState != "stable"){
+            return
+        }
+
+        buttons.createOffer.disabled = true
+        offer.disabled = true
+
+        //const desc = new RTCSessionDescription({ type:"offer", sdp:offer.value })
+        pc.setRemoteDescription(new RTCSessionDescription({ type:"offer", sdp:offer.value }))
+            .then(() => pc.createAnswer()).then(d => pc.setLocalDescription(d))
+            .catch(log)
         
-        console.log('Offer from pc1\n' + desc.sdp)
-        console.log('pc1 setLocalDescription start')
+        pc.onicecandidate = e => {
 
-        pc1.setLocalDescription(desc).then(
-            function() {
-                onSetLocalSuccess(pc1)
-            },
-            onSetSessionDescriptionError
-        )
+            if (e.candidate){
+                return
+            }
 
-        console.log('pc2 setRemoteDescription start')
+            answer.focus()
+            answer.value = pc.localDescription.sdp
+            answer.select()
+        }
+    }
+
+
+    answer.onkeypress = e => {
         
-        pc2.setRemoteDescription(desc).then(
-            function() {
-            onSetRemoteSuccess(pc2)
-            },
-            onSetSessionDescriptionError
-        )
-
-        console.log('pc2 createAnswer start')
-        // Since the 'remote' side has no media stream we need
-        // to pass in the right constraints in order for it to
-        // accept the incoming offer of audio and video.
-        pc2.createAnswer().then(
-            onCreateAnswerSuccess,
-            onCreateSessionDescriptionError
-        )
-
-        // todo Do better
-        setTimeout(() => localVideo.classList.remove('hide'), 250)
-    }
-
-    function onSetLocalSuccess(pc) {
-    console.log(getName(pc) + ' setLocalDescription complete')
-    }
-
-    function onSetRemoteSuccess(pc) {
-    console.log(getName(pc) + ' setRemoteDescription complete')
-    }
-
-    function onSetSessionDescriptionError(error) {
-    console.log('Failed to set session description: ' + error.toString())
-    }
-
-    function gotRemoteStream(e) {
-        if (remoteVideo.srcObject !== e.streams[0]) {
-            remoteVideo.srcObject = e.streams[0]
-            console.log('pc2 received remote stream')
+        if(!enterPressed(e) || pc.signalingState != "have-local-offer"){
+            return
         }
+
+        answer.disabled = true;
+        const desc = new RTCSessionDescription({ type:"answer", sdp:answer.value });
+        pc.setRemoteDescription(desc)
+            .then(x => console.log(x))
+            .catch(log)
     }
 
-    function onCreateAnswerSuccess(desc) {
-    console.log('Answer from pc2:\n' + desc.sdp)
-    console.log('pc2 setLocalDescription start')
-    pc2.setLocalDescription(desc).then(
-        function() {
-        onSetLocalSuccess(pc2)
-        },
-        onSetSessionDescriptionError
-    )
-    console.log('pc1 setRemoteDescription start')
-    pc1.setRemoteDescription(desc).then(
-        function() {
-        onSetRemoteSuccess(pc1)
-        },
-        onSetSessionDescriptionError
-    )
-    }
-
-    function onIceCandidate(pc, event) {
-    getOtherPc(pc).addIceCandidate(event.candidate)
-    .then(
-        function() {
-        onAddIceCandidateSuccess(pc)
-        },
-        function(err) {
-        onAddIceCandidateError(pc, err)
+    chat.onkeypress = e => {
+        
+        if (!enterPressed(e)){
+            return
         }
-    )
-    console.log(getName(pc) + ' ICE candidate: \n' + (event.candidate ?
-        event.candidate.candidate : '(null)'))
+
+        dc.send(chat.value)
+        log(chat.value)
+        chat.value = ''
     }
 
-    function onAddIceCandidateSuccess(pc) {
-        console.log(getName(pc) + ' addIceCandidate success')
+
+
+
+
+    // type may be success || warning || info ; el = el to append toast to 
+    const mkToast = (msg, type) => {
+        
+        const cont = document.createElement('div')
+        const toaster = document.querySelector('.toaster')
+
+        cont.innerHTML =  `<div style="height: 4rem;">
+            <div class="slds-notify_container slds-is-relative">
+                <div class="slds-notify slds-notify_toast slds-theme_${type}" role="alert">
+                    <span class="slds-assistive-text">${type}</span>
+                    <span class="slds-icon_container slds-icon-utility-${type} slds-m-right_small slds-no-flex slds-align-top" title="Description of icon when needed">
+                        <svg class="slds-icon slds-icon_small" aria-hidden="true">
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#${type}')}" />
+                        </svg>
+                    </span>
+                    <div class="slds-notify__content">
+                        <h2 class="slds-text-heading_small">${msg}</h2>
+                    </div>
+                    <button class="close slds-button slds-button_icon slds-notify__close slds-button_icon-inverse" title="Close">
+                        <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#close')}" />
+                        </svg>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                </div>
+            </div>
+        </div>`;
+        
+        cont.querySelector('.close').onclick = () => toaster.innerHTML = ''
+        toaster.innerHTML = ''
+        toaster.appendChild(cont.childNodes[0])
     }
 
-    function onAddIceCandidateError(pc, error) {
-        console.log(getName(pc) + ' failed to add ICE Candidate: ' + error.toString())
-    }
-
-    function onIceStateChange(pc, event) {
-        if (pc) {
-            console.log(getName(pc) + ' ICE state: ' + pc.iceConnectionState)
-            console.log('ICE state change event: ', event)
-        }
-    }
-
-    function hangup() {
-        console.log('Ending call')
-        pc1.close()
-        pc2.close()
-        pc1 = null
-        pc2 = null
-        hangupButton.disabled = true
-        callButton.disabled = false
-        localVideo.classList.add('hide')
-    }
-
+    
   </script>
 
   </html>
