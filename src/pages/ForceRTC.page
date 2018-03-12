@@ -15,6 +15,9 @@
         h1 {
             text-align: center;
         }
+        h4 {
+            font-size: 1.2rem !important;
+        }
         #remoteVideo {
             max-width: 100%;
         }
@@ -25,9 +28,10 @@
         #localVideo.connected {
             z-index: 999;
             position: absolute;
-            width: 84.5% !important;
-            height: 17%;
-            margin-top: 26%;
+            width: 100%;
+            height: 13%;
+            margin-left: 21rem;
+            margin-top: 21rem;
         }
         .videos {
             text-align: center;
@@ -39,6 +43,12 @@
         }
         .hide {
             display: none !important;
+        }
+        #chat {
+            width: 100%;
+        }
+        #create {
+            color: white;
         }
         .chatArea {
             margin: auto;
@@ -54,6 +64,25 @@
             margin: auto;
             width: 75%;
         }
+        #progress_bar {
+            margin: 10px 0;
+            padding: 3px;
+            border: 1px solid #000;
+            font-size: 14px;
+            clear: both;
+            opacity: 0;
+            -moz-transition: opacity 1s linear;
+            -o-transition: opacity 1s linear;
+            -webkit-transition: opacity 1s linear;
+        }
+        #progress_bar.loading {
+            opacity: 1.0;
+        }
+        #progress_bar .percent {
+            background-color: #4bca81;
+            height: auto;
+            width: 0;
+        }
     </style>
 </head>
 
@@ -66,7 +95,6 @@
     <video id="localVideo" title="You" autoplay="true" muted="true"></video>
 
     <video id="remoteVideo" autoplay="true" class="hide"></video>
-    <br />
 </div>
 
 <div class="createArea center hide">
@@ -79,21 +107,31 @@
     </div>
 </div>
 
-<br />
-<br />
-<br />
+<div class="chatArea center "><!-- hide -->
 
-<div class="chatArea center hide">
-
+    <h4>Peer Chat</h4>
+    <br/>
     <div id="div"></div>
-
-    <textarea 
-        id="chat" 
-        title="Hit enter to send" 
-        placeholder="Send text to peer. Press Enter to send.">
-    </textarea>
+    <textarea id="chat" title="Hit enter to send" 
+        placeholder="Send text to peer. Press Enter to send."></textarea>
 
     <br />
+    <br />
+
+    <h4>Peer File Transfer</h4>
+    <br/>
+    <input type="file" id="files" name="file" />
+    <button onclick="abortRead();">Cancel read</button>
+    <div id="progress_bar"><div class="percent">0%</div></div>
+
+</div>
+
+<div class="">
+    <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+        <th>Name</th>
+        <th>Action</th>
+        <tbody class="conns"></tbody>
+    </table>
 </div>
 
 </body>
@@ -214,7 +252,7 @@
         localVideo.classList.remove('hide')
     }
     
-    let dc // data channel
+    let dc // data channel for chat
     pc.ondatachannel = e => dcInit(dc = e.channel)
     pc.oniceconnectionstatechange = e => log(pc.iceConnectionState)
     function dcInit() {
@@ -224,6 +262,17 @@
             mkToast('Chat available', 'success')
         }
         dc.onmessage = e => log(e.data)
+    }
+        
+    let dcFile // data channel for file
+    pc.ondatachannel = e => dcFileInit(dc = e.channel)
+    function dcFileInit() {
+
+        dc.onopen = () => {
+            document.querySelector('.chatArea').classList.remove('hide')
+            mkToast('File available', 'success')
+        }
+        dc.onmessage = e => mkToast(e.data)
     }
 
     function createOffer() {
@@ -239,6 +288,7 @@
         }
         
         dcInit(dc = pc.createDataChannel("chat"))
+        dcFileInit(dcFile = pc.createDataChannel("file"))
 
         getMedia.then(() => pc.createOffer())
             .then(d => pc.setLocalDescription(d))
@@ -311,7 +361,122 @@
         toaster.appendChild(cont.childNodes[0])
     }
 
-    
+    // File uploads
+    let reader
+    const receiveBuffer = []
+    const progress = document.querySelector('.percent')
+
+    function abortRead() {
+        reader.abort()
+    }
+
+    function errorHandler(evt) {
+        switch(evt.target.error.code) {
+            case evt.target.error.NOT_FOUND_ERR:
+                mkToast('File Not Found!', 'error')
+                break
+            case evt.target.error.NOT_READABLE_ERR:
+                mkToast('File is not readable', 'error')
+                break
+            case evt.target.error.ABORT_ERR :
+                break
+            default:
+                mkToast('An error occurred reading this file.', 'error')
+        }
+    }
+
+    function updateProgress(evt) {
+        // evt is a ProgressEvent
+        if (evt.lengthComputable) {
+            const percentLoaded = Math.round((evt.loaded / evt.total) * 100)
+            // Increase the progress bar length.
+            if (percentLoaded < 100) {
+                progress.style.width = `${percentLoaded}%`
+                progress.textContent = `${percentLoaded}%`
+            }
+        }
+    }
+
+    function handleFileSelect(evt) {
+
+        progress.style.width = '0%' // Reset progress indicator on new file selection.
+        progress.textContent = '0%'
+
+        reader = new FileReader()
+        reader.onerror = errorHandler
+        reader.onprogress = updateProgress
+        reader.onabort = function(e) {
+            mkToast('File read cancelled', 'warning')
+        };
+        reader.onloadstart = function(e) {
+            document.getElementById('progress_bar').className = 'loading';
+        };
+        reader.onload = function(e) {
+            // Ensure that the progress bar displays 100% at the end.
+            progress.style.width = '100%'
+            progress.textContent = '100%'
+            setTimeout("document.getElementById('progress_bar').className='';", 2000)
+        }
+
+        // Read in the image file as a binary string.
+        reader.readAsBinaryString(evt.target.files[0]);
+    }
+
+    document.getElementById('files').addEventListener('change', handleFileSelect, false);
+
+    function onReceiveMessageCallback(event) {
+        console.log('Received Message ' + event.data.byteLength)
+        receiveBuffer.push(event.data);
+        receivedSize += event.data.byteLength;
+
+        receiveProgress.value = receivedSize;
+
+        // we are assuming that our signaling protocol told
+        // about the expected file size (and name, hash, etc).
+        var file = fileInput.files[0];
+        //if (receivedSize === file.size) {
+            const received = new window.Blob(receiveBuffer)
+            receiveBuffer = []
+
+            downloadAnchor.href = URL.createObjectURL(received);
+            downloadAnchor.download = 'file.name' // file.name
+            downloadAnchor.textContent =
+            'Click to download \'' + file.name + '\' (' + file.size + ' bytes)';
+            downloadAnchor.style.display = 'block';
+
+            var bitrate = Math.round(receivedSize * 8 /
+                ((new Date()).getTime() - timestampStart));
+            bitrateDiv.innerHTML = '<strong>Average Bitrate:</strong> ' +
+                bitrate + ' kbits/sec (max: ' + bitrateMax + ' kbits/sec)';
+
+            if (statsInterval) {
+            window.clearInterval(statsInterval);
+            statsInterval = null;
+            }
+
+            closeDataChannels();
+        //}
+    }
+
+    {   
+        const tb = document.querySelector('.conns')
+        const getUserConnections = new Promise((resolve, reject) =>
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ForceRTC.getUserConnections}',
+                (result, e) => e.status ? resolve(result) : reject(e.message)))
+        .then(conns => {
+            console.dir(conns)
+            conns.map(x => x.Answer__c
+                ? tb.innerHTML += 
+                    `<tr><td>${x.Name}</td><td><a href="${location.origin}/apex/ForceRTC?id=${x.Id}">Old</a></td></tr>`
+                : tb.innerHTML += 
+                    `<tr><td>${x.Name}</td><td><a href="${location.origin}/apex/ForceRTC?id=${x.Id}">Join</a></td></tr>`
+            )
+        })
+        .catch(error => mkToast(error, 'error'))
+
+        getUserConnections
+    }
   </script>
 
   </html>

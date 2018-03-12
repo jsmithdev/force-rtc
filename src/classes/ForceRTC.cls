@@ -25,7 +25,19 @@ global class ForceRTC {
             WHERE Id = :recId
         ];
     }
-    
+
+    @RemoteAction
+    global static List<Connect__c> getUserConnections() {
+        
+        return [
+            SELECT Id, Name, Answer__c, Offer__c, Initializer__c, Responder__c
+            FROM Connect__c 
+            WHERE Responder__c = :UserInfo.getUserId()
+            Order By CreatedDate DESC
+            LIMIT 20
+        ];// AND Answer__c = null
+    }
+
     @RemoteAction
     global static Connect__c setAnswer(String recId, String answer) {
         
