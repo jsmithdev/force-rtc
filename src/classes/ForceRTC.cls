@@ -56,11 +56,10 @@ global class ForceRTC {
     
     @RemoteAction
     global static List<User> getUsers() {
-        // Normally User wouldn't connect to themselves but demo so...
         return [
             SELECT Id, Name, Email
             FROM User
             WHERE isActive = true
-        ]; // AND Id != :UserInfo.getUserId()
+        ]; // AND Id != :UserInfo.getUserId() // Normally User wouldn't connect to themselves but demo
     }
 }
